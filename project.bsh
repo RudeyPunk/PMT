@@ -1,1 +1,147 @@
-echo "project  command"
+#!/usr/bin/bash
+
+newName=""
+createName=""
+deleteCurrent=""
+currentProject=""
+setCurrent=""
+displayHelp=""
+
+#########################
+# Test For no Arguments #
+#########################
+if  [ $# == 0 ]; then
+	displayHelp="1"
+fi
+
+######################
+# CReate an arguments array
+######################
+args=( "$@" )
+
+
+###################################
+# Parse the rest of the arguments #
+###################################
+i="0"				#init counter
+
+while (( $i<$# )); do		# while counter is less than the number of arguments
+	if [ "${args[$i]}" == "-c" ]; then
+		i=$[$i+1]
+		createName="${args[$i]}"
+		i=$[$i+1]
+	elif [ "${args[$i]}" == "-r" ]; then
+		i=$[$i+1]
+		newName="${args[$i]}"
+		i=$[$i+1]
+	elif [ "${args[$i]}" == "-d" ]; then
+		i=$[$i+1]
+		deleteCurrent="1"
+	elif [ "${args[$i]}" == "-cp" ]; then
+		i=$[$i+1]
+		currentProject="1"
+	else
+		setCurrent="${args[$i]}"
+		i=$[$i+1]
+	fi
+done
+
+##################################
+# Handle the Project Creation #
+##################################
+if [ -n "$createName" ]; then
+	echo "Create Project $createName"
+	pushd "$PMTCORPDIR/$PMTCURRDEPARTMENT"
+
+	if [ ! -d "$createName" ]
+	then
+		mkdir $createName
+		export PMTCURRPROJECT=$createName
+	else
+		echo "$createName Project already exists!"
+		return 0
+	fi
+	popd
+fi
+
+################################
+# Handle the Project rename #
+################################
+if [ -n "$newName" ]; then
+	echo "Rename Project"
+	if [ -n "$PMTCURRPROJECT" ]; then
+		echo "CHange the name of the current Project to $newName"
+		pushd "$PMTCORPDIR/$PMTCURRDEPARTMENT"
+		if [ ! -d "$newName" ]
+		then
+			mv $PMTCURRPROJECT $newName
+			export PMTCURRPROJECT=$newName
+		else
+			echo "$newName already exists!"
+			return 0
+		fi
+		popd
+	else
+		echo "Current Project not set!"
+		return 0
+	fi
+fi
+
+##################################
+# Handle the Project deletion #
+##################################
+if [ -n "$deleteCurrent" ]
+then
+	if [ -z "$PMTCURRPROJECT" ]
+	then
+		echo "Current Project not set"
+		return 0
+	else
+		pushd "$PMTCORPDIR/$PMTCURRDEPARTMENT"
+		rm -r $PMTCURRPROJECT
+		unset PMTCURRPROJECT
+		popd
+	fi
+fi
+
+############################################
+# Handle the display of current Project #
+############################################
+if [ -n "$currentProject" ]
+then
+	if [ -z "$PMTCURRPROJECT" ]
+	then
+		echo "Current Project not set!"
+		return 0
+	else
+		echo $PMTCURRPROJECT
+	fi
+fi
+
+#######################################
+# Handle the go to current Project #
+#######################################
+if [ -n "$setCurrent" ]
+then
+	cd "$PMTCORPDIR/$PMTCURRDEPARTMENT"
+	if [ -d "$setCurrent" ]
+	then 
+		cd $setCurrent
+		export PMTCURRPROJECT=$setCurrent
+	else
+		echo "$setCurrent Project does not exist"
+	fi
+fi
+
+##################################
+# Handle the display Help option #
+##################################
+if [ -n "$displayHelp" ]; then
+	echo "usage: Project [-c Project Name ] [ -r New Name ] [ -d ] [ -cp ] [ Project Name ] [] "
+	echo "	-c : Create new Project"
+	echo "	-r : rename directory to New Name"
+	echo "	-d : Delete the current Project"
+	echo "	-cp : Display the current Project"
+	echo "	Project Name : Change directory to Project Name if Exists"
+	echo "	 : Display help"
+fi

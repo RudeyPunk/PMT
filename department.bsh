@@ -1,5 +1,13 @@
 #!/usr/bin/bash
 
+newName=""
+createName=""
+deleteCurrent=""
+currentDepartment=""
+setCurrent=""
+displayHelp=""
+displayList=""
+
 #########################
 # Test For no Arguments #
 #########################
@@ -17,13 +25,8 @@ args=( "$@" )
 # Parse the rest of the arguments #
 ###################################
 i="0"				#init counter
-newName=""
-createName=""
-deleteCurrent=""
-currentDepartment=""
-setCurrent=""
 
-while (( $i<$# )); do		#while counter is less than the number of arguments
+while (( $i<$# )); do		# while counter is less than the number of arguments
 	if [ "${args[$i]}" == "-c" ]; then
 		i=$[$i+1]
 		createName="${args[$i]}"
@@ -37,7 +40,10 @@ while (( $i<$# )); do		#while counter is less than the number of arguments
 		deleteCurrent="1"
 	elif [ "${args[$i]}" == "-cd" ]; then
 		i=$[$i+1]
-		currentDepartment=1
+		currentDepartment="1"
+	elif [ "${args[$i]}" == "-l" ]; then
+		i=$[$i+1]
+		displayList="1"
 	else
 		setCurrent="${args[$i]}"
 		i=$[$i+1]
@@ -49,7 +55,7 @@ done
 ##################################
 if [ -n "$createName" ]; then
 	echo "Create Department $createName"
-	pushd $PMTCORPDIR
+	pushd $PMTCORPDIR > /dev/null
 
 	if [ ! -d "$createName" ]
 	then
@@ -69,7 +75,7 @@ if [ -n "$newName" ]; then
 	echo "Rename department"
 	if [ -n "$PMTCURRDEPARTMENT" ]; then
 		echo "CHange the namjke of the current department to $newName"
-		pushd $PMTCORPDIR
+		pushd $PMTCORPDIR > /dev/null
 		if [ ! -d "$newName" ]
 		then
 			mv $PMTCURRDEPARTMENT $newName
@@ -95,7 +101,7 @@ then
 		echo "Current department not set"
 		return 0
 	else
-		pushd $PMTCORPDIR
+		pushd $PMTCORPDIR > /dev/null
 		rm -r $PMTCURRDEPARTMENT
 		unset PMTCURRDEPARTMENT
 		popd
@@ -131,9 +137,25 @@ then
 	fi
 fi
 
+#######################################
+# Handle the diaplay List	      #
+#######################################
+if [ -n "$displayList" ]
+then
+	pushd "$PMTCORPDIR" > /dev/null
+	ls
+	popd
+fi
+
 ##################################
 # Handle the display Help option #
 ##################################
 if [ -n "$displayHelp" ]; then
 	echo "usage: department [-c Department Name ] [ -r New Name ] [ -d ] [ -cd ] [ Department Name ] [] "
+	echo "	-c : Create new Department"
+	echo "	-r : rename directory to New Name"
+	echo "	-d : Delete the current department"
+	echo "	-cd : Deisplay the current department"
+	echo "	Department Name : Change directory to Department Name if Exists"
+	echo "	 : Display help"
 fi

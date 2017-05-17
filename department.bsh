@@ -1,0 +1,139 @@
+#!/usr/bin/bash
+
+#########################
+# Test For no Arguments #
+#########################
+if  [ $# == 0 ]; then
+	displayHelp="1"
+fi
+
+######################
+# CReate an arguments array
+######################
+args=( "$@" )
+
+
+###################################
+# Parse the rest of the arguments #
+###################################
+i="0"				#init counter
+newName=""
+createName=""
+deleteCurrent=""
+currentDepartment=""
+setCurrent=""
+
+while (( $i<$# )); do		#while counter is less than the number of arguments
+	if [ "${args[$i]}" == "-c" ]; then
+		i=$[$i+1]
+		createName="${args[$i]}"
+		i=$[$i+1]
+	elif [ "${args[$i]}" == "-r" ]; then
+		i=$[$i+1]
+		newName="${args[$i]}"
+		i=$[$i+1]
+	elif [ "${args[$i]}" == "-d" ]; then
+		i=$[$i+1]
+		deleteCurrent="1"
+	elif [ "${args[$i]}" == "-cd" ]; then
+		i=$[$i+1]
+		currentDepartment=1
+	else
+		setCurrent="${args[$i]}"
+		i=$[$i+1]
+	fi
+done
+
+##################################
+# Handle the department Creation #
+##################################
+if [ -n "$createName" ]; then
+	echo "Create Department $createName"
+	pushd $PMTCORPDIR
+
+	if [ ! -d "$createName" ]
+	then
+		mkdir $createName
+		export PMTCURRDEPARTMENT=$createName
+	else
+		echo "$createName Department already exists!"
+		return 0
+	fi
+	popd
+fi
+
+################################
+# Handle the department rename #
+################################
+if [ -n "$newName" ]; then
+	echo "Rename department"
+	if [ -n "$PMTCURRDEPARTMENT" ]; then
+		echo "CHange the namjke of the current department to $newName"
+		pushd $PMTCORPDIR
+		if [ ! -d "$newName" ]
+		then
+			mv $PMTCURRDEPARTMENT $newName
+			export PMTCURRDEPARTMENT=$newName
+		else
+			echo "$newName already exists!"
+			return 0
+		fi
+		popd
+	else
+		echo "Current Department not set!"
+		return 0
+	fi
+fi
+
+##################################
+# Handle the department deletion #
+##################################
+if [ -n "$deleteCurrent" ]
+then
+	if [ -z "$PMTCURRDEPARTMENT" ]
+	then
+		echo "Current department not set"
+		return 0
+	else
+		pushd $PMTCORPDIR
+		rm -r $PMTCURRDEPARTMENT
+		unset PMTCURRDEPARTMENT
+		popd
+	fi
+fi
+
+############################################
+# Handle the display of current department #
+############################################
+if [ -n "$currentDepartment" ]
+then
+	if [ -z "$PMTCURRDEPARTMENT" ]
+	then
+		echo "Current Department not set!"
+		return 0
+	else
+		echo $PMTCURRDEPARTMENT
+	fi
+fi
+
+#######################################
+# Handle the go to current Department #
+#######################################
+if [ -n "$setCurrent" ]
+then
+	cd $PMTCORPDIR
+	if [ -d "$setCurrent" ]
+	then 
+		cd $setCurrent
+		export PMTCURRDEPARTMENT=$setCurrent
+	else
+		echo "$setCurrent department does not exist"
+	fi
+fi
+
+##################################
+# Handle the display Help option #
+##################################
+if [ -n "$displayHelp" ]; then
+	echo "usage: department [-c Department Name ] [ -r New Name ] [ -d ] [ -cd ] [ Department Name ] [] "
+fi
